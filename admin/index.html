@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR শিট জেনারেটর</title>
+    <style>
+       @import url('https://fonts.maateen.me/kalpurush/font.css');
+      body {
+            font-family: 'Kalpurush', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #preview-container {
+            display: none;
+            padding: 20px;
+            background: white;
+            margin-top: 20px;
+        }
+
+        .omr-sheet {
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .omr-header {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+
+        .omr-header p {
+            margin: 5px 0;
+        }
+
+        .question-item {
+            border: 1px solid black;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .question-number {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .question-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .option-circle {
+            width: 25px;
+            height: 25px;
+            border: 1px solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #html-viewer {
+            margin-top: 20px;
+            background: #f8f8f8;
+            padding: 20px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow: auto;
+        }
+
+        .copy-button {
+            margin-top: 10px;
+            display: block;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #preview-container, #preview-container * {
+                visibility: visible;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>OMR শিট জেনারেটর</h1>
+        <div class="form-group">
+            <label for="institute-name">প্রতিষ্ঠানের নাম</label>
+            <input type="text" id="institute-name" placeholder="প্রতিষ্ঠানের নাম লিখুন">
+        </div>
+        <div class="form-group">
+            <label for="tagline">প্রতিষ্ঠানের স্লোগান</label>
+            <input type="text" id="tagline" placeholder="প্রতিষ্ঠানের স্লোগান লিখুন">
+        </div>
+        <div class="form-group">
+            <label for="subject">বিষয়</label>
+            <input type="text" id="subject" placeholder="বিষয় লিখুন">
+        </div>
+        <div class="form-group">
+            <label for="num-questions">প্রশ্ন সংখ্যা</label>
+            <input type="number" id="num-questions" placeholder="প্রশ্ন সংখ্যা লিখুন">
+        </div>
+        <button onclick="generateOMR()">জেনারেট করুন</button>
+    </div>
+
+    <div id="preview-container">
+        <div class="omr-sheet" id="omr-sheet">
+            <div class="omr-header">
+                <h2 id="preview-institute-name"></h2>
+                <p id="preview-tagline"></p>
+                <p id="preview-subject"></p>
+            </div>
+            <div id="questions-container" class="omr-questions"></div>
+        </div>
+        <button onclick="generateHTML()">HTML তৈরি করুন</button>
+    </div>
+
+    <div id="html-viewer-section" style="display: none;">
+        <h2>Generated HTML:</h2>
+        <div id="html-viewer"></div>
+        <button class="copy-button" onclick="copyHTML()">কপি করুন</button>
+    </div>
+
+    <script>
+        function generateOMR() {
+            const instituteName = document.getElementById("institute-name").value;
+            const tagline = document.getElementById("tagline").value;
+            const subject = document.getElementById("subject").value;
+            const numQuestions = parseInt(document.getElementById("num-questions").value);
+
+            document.getElementById("preview-institute-name").innerText = instituteName;
+            document.getElementById("preview-tagline").innerText = tagline;
+            document.getElementById("preview-subject").innerText = "বিষয়: " + subject;
+
+            const questionsContainer = document.getElementById("questions-container");
+            questionsContainer.innerHTML = "";
+
+            const banglaNumbers = ["১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯", "১০", "১১", "১২", "১৩", "১৪", "১৫", "১৬", "১৭", "১৮", "১৯", "২০"];
+            const banglaLetters = ["ক", "খ", "গ", "ঘ"];
+
+            for (let i = 0; i < numQuestions; i++) {
+                const questionDiv = document.createElement("div");
+                questionDiv.classList.add("question-item");
+
+                const questionNumber = document.createElement("div");
+                questionNumber.classList.add("question-number");
+                questionNumber.innerText = banglaNumbers[i % banglaNumbers.length];
+
+                const optionsContainer = document.createElement("div");
+                optionsContainer.classList.add("question-options");
+
+                banglaLetters.forEach(letter => {
+                    const option = document.createElement("div");
+                    option.classList.add("option-circle");
+                    option.innerText = letter;
+                    optionsContainer.appendChild(option);
+                });
+
+                questionDiv.appendChild(questionNumber);
+                questionDiv.appendChild(optionsContainer);
+                questionsContainer.appendChild(questionDiv);
+            }
+
+            document.getElementById("preview-container").style.display = "block";
+        }
+
+        function generateHTML() {
+            const htmlContent = document.getElementById("omr-sheet").outerHTML;
+            document.getElementById("html-viewer").innerText = htmlContent;
+            document.getElementById("html-viewer-section").style.display = "block";
+        }
+
+        function copyHTML() {
+            const htmlContent = document.getElementById("html-viewer").innerText;
+            navigator.clipboard.writeText(htmlContent).then(() => {
+                alert("HTML কপি করা হয়েছে!");
+            });
+        }
+    </script>
+</body>
+</html>
