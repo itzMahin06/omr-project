@@ -1,23 +1,298 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OMR Admin Panel</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR শিট জেনারেটর</title>
+    <style>
+       @import url('https://fonts.maateen.me/kalpurush/font.css');
+        body {
+            font-family: 'Kalpurush', sans-serif;
+            
+        }
+ 
+        .container {
+            max-width: 100%;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            font-family: 'Kalpurush', sans-serif;
+
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #preview-container {
+            display: none;
+            padding: 20px;
+            background: white;
+          height: 297mm; 
+          width: 135mm;
+        }
+
+        .omr-sheet {
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .omr-header {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+
+        .omr-header p {
+            margin: 5px 0;
+        }
+
+        .form-group-inline {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+
+        .form-group-inline label {
+            width: 30%;
+            font-weight: normal;
+        }
+
+        .omr-questions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0;
+            margin-top: 20px;
+        }
+
+        .question-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+
+        .question-item {
+            border: 1px solid black;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .question-number {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .question-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .option-circle {
+            width: 25px;
+            height: 25px;
+            border: 1px solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        button {
+            font-family: 'Kalpurush', sans-serif;
+
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        @media print {
+            body,button * {
+                visibility: hidden;
+               
+            }
+
+            #preview-container, #preview-container * {
+                visibility: visible;
+            }
+
+            #preview-container {
+                margin: 0;
+                padding: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>OMR Admin Panel</h1>
-  <form id="answer-form">
-    <div id="questions-container">
-      <div class="question">
-        <label>Question 1:</label>
-        <input type="text" class="answer-input" placeholder="Enter correct answer (A/B/C/D)">
-      </div>
+    <div class="container">
+        <h1>OMR শিট জেনারেটর</h1>
+        <div class="form-group">
+            <label for="institute-name">প্রতিষ্ঠানের নাম</label>
+            <input type="text" id="institute-name" placeholder="প্রতিষ্ঠানের নাম লিখুন">
+        </div>
+        <div class="form-group">
+            <label for="tagline">প্রতিষ্ঠানের স্লোগান</label>
+            <input type="text" id="tagline" placeholder="প্রতিষ্ঠানের স্লোগান লিখুন">
+        </div>
+        <div class="form-group">
+            <label for="subject">বিষয়</label>
+            <input type="text" id="subject" placeholder="বিষয় লিখুন">
+        </div>
+        <div class="form-group">
+            <label for="num-questions">প্রশ্ন সংখ্যা</label>
+            <input type="number" id="num-questions" placeholder="প্রশ্ন সংখ্যা লিখুন (সর্বোচ্চ ১০০ প্রশ্ন)* ">
+        </div>
+        <button onclick="generateOMR()">জেনারেট করুন</button>
     </div>
-    <button type="button" id="add-question">Add Question</button>
-    <button type="submit">Save Answers</button>
-  </form>
-  <script src="script.js"></script>
+
+    <div id="preview-container">
+        <div class="omr-sheet" id="omr-sheet">
+            <div class="omr-header">
+                <h2 id="preview-institute-name"></h2>
+                <p id="preview-tagline"></p>
+                <p id="preview-subject"></p>
+            </div>
+            <div class="form-group-inline">
+                <label>নাম: _____________________</label>
+                <label>রোল: _____________________</label>
+            </div>
+            <div id="questions-container" class="omr-questions"></div>
+        </div>
+        <button onclick="printOMR()">PDF সেভ করুন</button> <br>
+        <button id="capture-btn">Download as JPG</button> 
+    </div>
+
+    <script>
+        function generateOMR() {
+            const instituteName = document.getElementById("institute-name").value;
+            const tagline = document.getElementById("tagline").value;
+            const subject = document.getElementById("subject").value;
+            const numQuestions = parseInt(document.getElementById("num-questions").value);
+
+            document.getElementById("preview-institute-name").innerText = instituteName;
+            document.getElementById("preview-tagline").innerText = tagline;
+            document.getElementById("preview-subject").innerText = "বিষয়: " + subject;
+
+            const questionsContainer = document.getElementById("questions-container");
+            questionsContainer.innerHTML = "";
+
+            const banglaNumbers = ["১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯", "১০", "১১", "১২", "১৩", "১৪", "১৫", "১৬", "১৭", "১৮", "১৯", "২০","২১", "২২", "২৩", "২৪", "২৫", "২৬", "২৭", "২৮", "২৯", "৩০", "৩১", "৩২", "৩৩", "৩৪", "৩৫", "৩৬", "৩৭", "৩৮", "৩৯", "৪০", "৪১", "৪২", "৪৩", "৪৪", "৪৫", "৪৬", "৪৭", "৪৮", "৪৯", "৫০", "৫১", "৫২", "৫৩", "৫৪", "৫৫", "৫৬", "৫৭", "৫৮", "৫৯", "৬০", "৬১", "৬২", "৬৩", "৬৪", "৬৫", "৬৬", "৬৭", "৬৮", "৬৯", "৭০", "৭১", "৭২", "৭৩", "৭৪", "৭৫", "৭৬", "৭৭", "৭৮", "৭৯", "৮০", "৮১", "৮২", "৮৩", "৮৪", "৮৫", "৮৬", "৮৭", "৮৮", "৮৯", "৯০", "৯১", "৯২", "৯৩", "৯৪", "৯৫", "৯৬", "৯৭", "৯৮", "৯৯", "১০০"];
+            const banglaLetters = ["ক", "খ", "গ", "ঘ"];
+
+            for (let i = 0; i < numQuestions; i++) {
+                const questionDiv = document.createElement("div");
+                questionDiv.classList.add("question-item");
+
+                const questionNumber = document.createElement("div");
+                questionNumber.classList.add("question-number");
+                questionNumber.innerText = banglaNumbers[i % banglaNumbers.length];
+
+                const optionsContainer = document.createElement("div");
+                optionsContainer.classList.add("question-options");
+
+                banglaLetters.forEach(letter => {
+                    const option = document.createElement("div");
+                    option.classList.add("option-circle");
+                    option.innerText = letter;
+                    optionsContainer.appendChild(option);
+                });
+
+                questionDiv.appendChild(questionNumber);
+                questionDiv.appendChild(optionsContainer);
+                questionsContainer.appendChild(questionDiv);
+            }
+
+            document.getElementById("preview-container").style.display = "block";
+        }
+
+        function printOMR() {
+            window.print();
+        }
+
+        // Import the html2canvas library dynamically
+(async function () {
+  if (!window.html2canvas) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    document.head.appendChild(script);
+    await new Promise((resolve) => (script.onload = resolve));
+  }
+})();
+
+document.getElementById('capture-btn').addEventListener('click', async () => {
+  const previewContainer = document.getElementById('preview-container');
+  const captureButton = document.getElementById('capture-btn');
+  
+  // Temporarily hide the button
+  captureButton.style.display = 'none';
+   
+function printOMR() {
+  const printButton = document.querySelector('[onclick="printOMR()"]');
+  printButton.style.display = 'none'; // Hide the button
+
+  // Perform the required print or capture actions
+  html2canvas(document.getElementById('preview-container'), { scale: 2 }).then((canvas) => {
+    const image = canvas.toDataURL('image/jpeg', 1.0); // Convert canvas to image
+    
+    // Create a download link
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = 'preview-container.jpg';
+    link.click();
+
+    printButton.style.display = 'inline-block'; // Show the button again
+  });
+}
+
+
+  // Use html2canvas to capture the element
+  html2canvas(previewContainer, { scale: 2 }).then((canvas) => {
+    // Convert the canvas to a data URL (JPEG format)
+    const image = canvas.toDataURL('image/jpeg', 1.0);
+
+    // Create a temporary link to download the image
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = 'omr-by-mahin.jpg';
+    link.click();
+
+    // Restore the button's visibility
+    captureButton.style.display = 'inline-block';
+  });
+});
+    </script>
 </body>
 </html>
