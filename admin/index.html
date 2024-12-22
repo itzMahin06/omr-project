@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OMR শিট জেনারেটর</title>
     <style>
-       @import url('https://fonts.maateen.me/kalpurush/font.css');
-      body {
+        body {
             font-family: 'Kalpurush', sans-serif;
             margin: 0;
             padding: 0;
@@ -177,6 +176,8 @@
         <h2>Generated HTML:</h2>
         <div id="html-viewer"></div>
         <button class="copy-button" onclick="copyHTML()">কপি করুন</button>
+        <button class="copy-button" onclick="downloadHTML('html')">ডাউনলোড .html</button>
+        <button class="copy-button" onclick="downloadHTML('txt')">ডাউনলোড .txt</button>
     </div>
 
     <script>
@@ -233,6 +234,15 @@
             navigator.clipboard.writeText(htmlContent).then(() => {
                 alert("HTML কপি করা হয়েছে!");
             });
+        }
+
+        function downloadHTML(format) {
+            const htmlContent = document.getElementById("html-viewer").innerText;
+            const fileBlob = new Blob([htmlContent], { type: format === "html" ? "text/html" : "text/plain" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(fileBlob);
+            link.download = `OMR_Sheet.${format}`;
+            link.click();
         }
     </script>
 </body>
